@@ -111,7 +111,6 @@
                             </tr>
                         </thead>
                         <tbody id="attendanceTable">
-                           <!-- Data akan diisi oleh JavaScript -->
                            <tr><td colspan="7" class="text-center p-4 text-gray-500">Memuat data...</td></tr>
                         </tbody>
                     </table>
@@ -126,7 +125,6 @@
                         <span class="mr-2">🕐</span> Ringkasan Shift Hari Ini
                     </h3>
                     <div class="space-y-4" id="shiftOverviewContainer">
-                        <!-- Data akan diisi oleh JavaScript -->
                         <p class="text-gray-500">Memuat data shift...</p>
                     </div>
                 </div>
@@ -138,9 +136,38 @@
                         <span id="pendingCountBadge" class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full hidden">0 pending</span>
                     </h3>
                     <div class="space-y-4" id="earlyLeaveRequests">
-                        <!-- Data akan diisi oleh JavaScript -->
                         <p class="text-gray-500">Memuat permintaan...</p>
                     </div>
+                </div>
+            </div>
+            
+             <!-- Weekly Attendance Report -->
+             <div class="bg-white rounded-lg card-shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="mr-2">📈</span> Laporan Kehadiran Mingguan
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="text-left p-3 font-semibold">Nama Karyawan</th>
+                                <th class="text-center p-3 font-semibold">Sen</th>
+                                <th class="text-center p-3 font-semibold">Sel</th>
+                                <th class="text-center p-3 font-semibold">Rab</th>
+                                <th class="text-center p-3 font-semibold">Kam</th>
+                                <th class="text-center p-3 font-semibold">Jum</th>
+                                <th class="text-center p-3 font-semibold">Sab</th>
+                                <th class="text-center p-3 font-semibold">Min</th>
+                                <th class="text-center p-3 font-semibold">Total Jam</th>
+                            </tr>
+                        </thead>
+                        <tbody id="weeklyReportTable">
+                           <tr><td colspan="9" class="text-center p-4 text-gray-500">Memuat laporan mingguan...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="mt-4 text-xs text-gray-600">
+                    <p>Keterangan: ✅ Hadir | ⚠️ Terlambat | 🔴 Tidak Hadir | - Libur</p>
                 </div>
             </div>
         </main>
@@ -193,54 +220,42 @@
     </div>
 
     <script>
-        // =============================================
-        // URL WEB APP ANDA
-        // =============================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzNtA8PdlbZQ_Jw_5JNLlDnhT-EYq-ylpmMrFIgedqGObtfcGVkpV50DSS4AGxrDjsE/exec";
-        // =============================================
 
-        // Update current date and time
         function updateDateTime() {
             const now = new Date();
             const dateTimeString = now.toLocaleDateString('id-ID', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric' 
+                weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
             }) + ' - ' + now.toLocaleTimeString('id-ID');
             document.getElementById('currentDateTime').textContent = dateTimeString;
         }
 
-        // Memuat data utama dari Google Sheet
         async function loadDashboardData() {
             showNotification('Memuat data terbaru...', 'info');
             try {
-                let response = await fetch(`${GAS_URL}?action=getManagerDashboard`);
-                let result = await response.json();
+                const response = await fetch(`${GAS_URL}?action=getManagerDashboard`);
+                const result = await response.json();
 
                 if (result.status === 'success') {
                     populateDashboard(result.data);
                     showNotification('Data berhasil dimuat', 'success');
                 } else {
-                    throw new Error(result.message);
+                    throw new Error(result.message || 'Unknown error from server');
                 }
             } catch (error) {
                 showNotification(`Error: ${error.message}`, 'error');
             }
         }
 
-        // Mengisi data ke HTML
         function populateDashboard(data) {
-            // 1. Quick Stats
             document.getElementById('presentCount').textContent = data.quickStats.presentCount;
             document.getElementById('absentCount').textContent = data.quickStats.absentCount;
             document.getElementById('lateCount').textContent = data.quickStats.lateCount;
             document.getElementById('workingCount').textContent = data.quickStats.workingCount;
 
-            // 2. Attendance Table
             const tableBody = document.getElementById('attendanceTable');
-            tableBody.innerHTML = ''; // Kosongkan tabel
-            if (data.attendanceTable.length === 0) {
+            tableBody.innerHTML = ''; 
+            if (!data.attendanceTable || data.attendanceTable.length === 0) {
                  tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Tidak ada jadwal hari ini.</td></tr>';
             } else {
                 data.attendanceTable.forEach(emp => {
@@ -249,33 +264,24 @@
                     if(emp.status === "Tidak Hadir") statusTextColor = 'text-red-600';
 
                     let jamMasukDisplay = emp.jamMasuk;
-                    if (emp.status === 'Terlambat') {
-                        jamMasukDisplay = `<span class="text-red-600 font-semibold">${emp.jamMasuk}</span>`;
+                    if (emp.status.includes("Terlambat")) {
+                        jamMasukDisplay = `<span class="text-red-600 font-semibold">${emp.jamMasuk} (Terlambat)</span>`;
                     }
                     
                     const row = `
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="p-3">
-                                <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">${emp.foto}</div>
-                            </td>
+                            <td class="p-3"><div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">${emp.foto}</div></td>
                             <td class="p-3 font-medium">${emp.nama}</td>
                             <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${emp.shift}</span></td>
                             <td class="p-3">${jamMasukDisplay}</td>
                             <td class="p-3 text-gray-500">${emp.jamKeluar}</td>
                             <td class="p-3 text-gray-600">${emp.durasi}</td>
-                            <td class="p-3">
-                                <div class="flex items-center">
-                                    <div class="w-2 h-2 rounded-full ${statusColorClass} mr-2"></div>
-                                    <span class="${statusTextColor} font-medium">${emp.status}</span>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                            <td class="p-3"><div class="flex items-center"><div class="w-2 h-2 rounded-full ${statusColorClass} mr-2"></div><span class="${statusTextColor} font-medium">${emp.status}</span></div></td>
+                        </tr>`;
                     tableBody.innerHTML += row;
                 });
             }
 
-            // 3. Shift Overview
             const shiftContainer = document.getElementById('shiftOverviewContainer');
             shiftContainer.innerHTML = '';
             data.shiftOverview.forEach(shift => {
@@ -290,48 +296,55 @@
                             <div class="bg-blue-600 h-2 rounded-full progress-bar" style="width: ${percentage}%"></div>
                         </div>
                         <p class="text-xs text-gray-600 mt-1">${shift.total - shift.present} tidak hadir</p>
-                    </div>
-                `;
+                    </div>`;
                 shiftContainer.innerHTML += shiftEl;
             });
 
-            // 4. Early Leave Requests
             const requestsContainer = document.getElementById('earlyLeaveRequests');
             requestsContainer.innerHTML = '';
-            if (data.earlyLeaveRequests.length > 0) {
+            if (data.earlyLeaveRequests && data.earlyLeaveRequests.length > 0) {
                 document.getElementById('pendingCountBadge').textContent = `${data.earlyLeaveRequests.length} pending`;
                 document.getElementById('pendingCountBadge').classList.remove('hidden');
 
                 data.earlyLeaveRequests.forEach(req => {
-                    const reqEl = `
-                        <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="font-medium text-gray-800">${req.nama}</p>
-                                    <p class="text-sm text-gray-600">Ingin pulang pukul ${req.waktu}</p>
-                                </div>
-                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
-                            </div>
-                            <p class="text-sm text-gray-700 mb-3"><strong>Alasan:</strong> ${req.alasan}</p>
-                            <div class="flex space-x-2">
-                                <button onclick="handleLeaveRequest('${req.requestId}', 'approve')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">✓ Setujui</button>
-                                <button onclick="handleLeaveRequest('${req.requestId}', 'reject')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">✗ Tolak</button>
-                            </div>
-                        </div>
-                    `;
+                    const reqEl = `<div class="border border-yellow-200 bg-yellow-50 rounded-lg p-4"><div class="flex justify-between items-start mb-2"><div><p class="font-medium text-gray-800">${req.nama}</p><p class="text-sm text-gray-600">Ingin pulang pukul ${req.waktu}</p></div><span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span></div><p class="text-sm text-gray-700 mb-3"><strong>Alasan:</strong> ${req.alasan}</p><div class="flex space-x-2"><button onclick="handleLeaveRequest('${req.requestId}', 'approve')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">✓ Setujui</button><button onclick="handleLeaveRequest('${req.requestId}', 'reject')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">✗ Tolak</button></div></div>`;
                     requestsContainer.innerHTML += reqEl;
                 });
             } else {
                 document.getElementById('pendingCountBadge').classList.add('hidden');
                 requestsContainer.innerHTML = '<p class="text-sm text-gray-500">Tidak ada permintaan izin pulang cepat.</p>';
             }
+
+            // --- BARU: Mengisi Laporan Mingguan ---
+            const weeklyTableBody = document.getElementById('weeklyReportTable');
+            weeklyTableBody.innerHTML = '';
+            if (data.weeklyReport && data.weeklyReport.length > 0) {
+                data.weeklyReport.forEach(report => {
+                    let daysHtml = '';
+                    report.days.forEach(status => {
+                        let icon = '-';
+                        if (status === 'Hadir') icon = '✅';
+                        if (status === 'Terlambat') icon = '⚠️';
+                        if (status === 'Tidak Hadir') icon = '🔴';
+                        daysHtml += `<td class="p-3 text-center">${icon}</td>`;
+                    });
+                    const row = `
+                        <tr class="border-b">
+                            <td class="p-3 font-medium">${report.nama}</td>
+                            ${daysHtml}
+                            <td class="p-3 text-center font-semibold">${report.totalJam}</td>
+                        </tr>`;
+                    weeklyTableBody.innerHTML += row;
+                });
+            } else {
+                weeklyTableBody.innerHTML = '<tr><td colspan="9" class="text-center p-4 text-gray-500">Laporan mingguan tidak tersedia.</td></tr>';
+            }
         }
         
         async function postToServer(payload) {
              try {
                 let response = await fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Diperlukan untuk Apps Script V8
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
@@ -351,9 +364,8 @@
             
             if (result.status === 'success') {
                 let successTitle = actionType === 'approve' ? 'Permintaan Disetujui!' : 'Permintaan Ditolak!';
-                let successMsg = `Aksi telah berhasil dicatat.`;
-                showSuccessModal(successTitle, successMsg);
-                loadDashboardData(); // Muat ulang data
+                showSuccessModal(successTitle, `Aksi telah berhasil dicatat.`);
+                loadDashboardData(); 
             } else {
                 showNotification(`Error: ${result.message}`, 'error');
             }
@@ -368,14 +380,7 @@
             if (title && message) {
                 closeAnnouncementModal();
                 showNotification('Mengirim pengumuman...', 'info');
-                
-                let result = await postToServer({ 
-                    action: 'sendAnnouncement', 
-                    title: title, 
-                    message: message, 
-                    target: target 
-                });
-                
+                let result = await postToServer({ action: 'sendAnnouncement', title, message, target });
                 if (result.status === 'success') {
                     showSuccessModal('Pengumuman Terkirim!', `Pengumuman "${title}" berhasil dikirim.`);
                 } else {
@@ -384,43 +389,24 @@
             }
         }
 
-        // --- Fungsi Modal & Notifikasi ---
-        function showAnnouncementModal() {
-            document.getElementById('announcementModal').classList.remove('hidden');
-        }
-
-        function closeAnnouncementModal() {
-            document.getElementById('announcementModal').classList.add('hidden');
-            document.getElementById('announcementTitle').value = '';
-            document.getElementById('announcementMessage').value = '';
-        }
-
-        function showSuccessModal(title, message) {
-            document.getElementById('successTitle').textContent = title;
-            document.getElementById('successMessage').textContent = message;
-            document.getElementById('successModal').classList.remove('hidden');
-        }
-
-        function closeSuccessModal() {
-            document.getElementById('successModal').classList.add('hidden');
-        }
-
+        function showAnnouncementModal() { document.getElementById('announcementModal').classList.remove('hidden'); }
+        function closeAnnouncementModal() { document.getElementById('announcementModal').classList.add('hidden'); document.getElementById('announcementTitle').value = ''; document.getElementById('announcementMessage').value = '';}
+        function showSuccessModal(title, message) { document.getElementById('successTitle').textContent = title; document.getElementById('successMessage').textContent = message; document.getElementById('successModal').classList.remove('hidden'); }
+        function closeSuccessModal() { document.getElementById('successModal').classList.add('hidden'); }
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 notification-slide ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 notification-slide ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
             notification.textContent = message;
             document.body.appendChild(notification);
             setTimeout(() => { notification.remove(); }, 3000);
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             updateDateTime();
             setInterval(updateDateTime, 1000);
-            loadDashboardData(); // Muat data saat halaman dibuka
+            loadDashboardData(); 
         });
     </script>
 </body>
 </html>
-
 
