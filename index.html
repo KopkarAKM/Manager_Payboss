@@ -22,6 +22,7 @@
 </head>
 <body class="min-h-full bg-gray-50">
     <div class="min-h-full">
+        <!-- Header -->
         <header class="gradient-bg text-white p-4">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-3">
@@ -33,13 +34,14 @@
                 </div>
                 <div class="text-right">
                     <p class="text-sm opacity-90">Manager,</p>
-                    <p class="font-semibold">Ageng Prasongko</p>
+                    <p class="font-semibold">Budi Santoso</p>
                     <p class="text-xs opacity-75" id="currentDateTime">Memuat...</p>
                 </div>
             </div>
         </header>
 
         <main class="max-w-7xl mx-auto p-4 space-y-6">
+            <!-- Quick Stats -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="bg-white rounded-lg card-shadow p-6">
                     <div class="flex items-center">
@@ -79,6 +81,7 @@
                 </div>
             </div>
 
+            <!-- Real-time Attendance Monitor -->
             <div class="bg-white rounded-lg card-shadow p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center">
@@ -105,48 +108,44 @@
                                 <th class="text-left p-3 font-semibold">Jam Keluar</th>
                                 <th class="text-left p-3 font-semibold">Durasi Kerja</th>
                                 <th class="text-left p-3 font-semibold">Status</th>
-                                <th class="text-left p-3 font-semibold">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="attendanceTable">
-                           <tr><td colspan="8" class="text-center p-4 text-gray-500">Memuat data...</td></tr>
+                           <!-- Data akan diisi oleh JavaScript -->
+                           <tr><td colspan="7" class="text-center p-4 text-gray-500">Memuat data...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Shift Overview & Early Leave Requests -->
             <div class="grid md:grid-cols-2 gap-6">
+                <!-- Shift Overview -->
                 <div class="bg-white rounded-lg card-shadow p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                         <span class="mr-2">🕐</span> Ringkasan Shift Hari Ini
                     </h3>
                     <div class="space-y-4" id="shiftOverviewContainer">
+                        <!-- Data akan diisi oleh JavaScript -->
                         <p class="text-gray-500">Memuat data shift...</p>
                     </div>
                 </div>
 
+                <!-- Early Leave Requests -->
                 <div class="bg-white rounded-lg card-shadow p-6">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
                         <span class="mr-2">⚠️</span> Permintaan Pulang Cepat
                         <span id="pendingCountBadge" class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full hidden">0 pending</span>
                     </h3>
                     <div class="space-y-4" id="earlyLeaveRequests">
+                        <!-- Data akan diisi oleh JavaScript -->
                         <p class="text-gray-500">Memuat permintaan...</p>
                     </div>
                 </div>
             </div>
-            
-             <div class="bg-white rounded-lg card-shadow p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                    <span class="mr-2">📈</span> Laporan Kehadiran Mingguan (Contoh)
-                </h3>
-                <p class="text-sm text-gray-600">Fitur ini dapat dikembangkan lebih lanjut di Apps Script untuk menarik data historis.</p>
-            </div>
         </main>
 
-        <div id="employeeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
-             </div>
-
+        <!-- Announcement Modal -->
         <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg max-w-md w-full p-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Buat Pengumuman</h3>
@@ -180,6 +179,7 @@
             </div>
         </div>
 
+        <!-- Success Modal -->
         <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
             <div class="bg-white rounded-lg max-w-sm w-full p-6 text-center">
                 <div class="text-green-500 text-5xl mb-4">✅</div>
@@ -241,32 +241,33 @@
             const tableBody = document.getElementById('attendanceTable');
             tableBody.innerHTML = ''; // Kosongkan tabel
             if (data.attendanceTable.length === 0) {
-                 tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-500">Tidak ada jadwal hari ini.</td></tr>';
+                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Tidak ada jadwal hari ini.</td></tr>';
             } else {
                 data.attendanceTable.forEach(emp => {
                     const statusColorClass = emp.statusColor === 'online' ? 'status-online' : 'status-offline';
-                    const statusTextColor = emp.statusColor === 'online' ? 'text-green-600' : 'text-red-600';
-                    if (emp.status === 'Terlambat') statusTextColor = 'text-red-600';
-                    if (emp.status === 'Tidak Hadir') statusColorClass = 'status-offline';
+                    let statusTextColor = emp.statusColor === 'online' ? 'text-green-600' : 'text-gray-500';
+                    if(emp.status === "Tidak Hadir") statusTextColor = 'text-red-600';
+
+                    let jamMasukDisplay = emp.jamMasuk;
+                    if (emp.status === 'Terlambat') {
+                        jamMasukDisplay = `<span class="text-red-600 font-semibold">${emp.jamMasuk}</span>`;
+                    }
                     
                     const row = `
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-3">
-                                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">${emp.foto}</div>
+                                <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">${emp.foto}</div>
                             </td>
                             <td class="p-3 font-medium">${emp.nama}</td>
                             <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${emp.shift}</span></td>
-                            <td class="p-3 ${emp.status === 'Terlambat' ? 'text-red-600' : ''}">${emp.jamMasuk}</td>
-                            <td class="p-3 text-gray-400">${emp.jamKeluar}</td>
-                            <td class="p-3">${emp.durasi}</td>
+                            <td class="p-3">${jamMasukDisplay}</td>
+                            <td class="p-3 text-gray-500">${emp.jamKeluar}</td>
+                            <td class="p-3 text-gray-600">${emp.durasi}</td>
                             <td class="p-3">
                                 <div class="flex items-center">
                                     <div class="w-2 h-2 rounded-full ${statusColorClass} mr-2"></div>
                                     <span class="${statusTextColor} font-medium">${emp.status}</span>
                                 </div>
-                            </td>
-                            <td class="p-3">
-                                <button onclick="viewDetails('${emp.id}')" class="text-blue-600 hover:text-blue-800 text-xs">Detail</button>
                             </td>
                         </tr>
                     `;
@@ -313,8 +314,8 @@
                             </div>
                             <p class="text-sm text-gray-700 mb-3"><strong>Alasan:</strong> ${req.alasan}</p>
                             <div class="flex space-x-2">
-                                <button onclick="approveEarlyLeave('${req.requestId}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">✓ Setujui</button>
-                                <button onclick="rejectEarlyLeave('${req.requestId}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">✗ Tolak</button>
+                                <button onclick="handleLeaveRequest('${req.requestId}', 'approve')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">✓ Setujui</button>
+                                <button onclick="handleLeaveRequest('${req.requestId}', 'reject')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">✗ Tolak</button>
                             </div>
                         </div>
                     `;
@@ -331,13 +332,9 @@
                 const response = await fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors', // Diperlukan untuk Apps Script V8
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                // Karena mode 'no-cors', kita tidak bisa membaca respons.
-                // Kita anggap berhasil dan muat ulang data.
                 return { status: 'success' };
             } catch (error) {
                 console.error('Error posting:', error);
@@ -345,31 +342,23 @@
             }
         }
 
-        // Approve early leave
-        async function approveEarlyLeave(requestId) {
-            showNotification('Memproses persetujuan...', 'info');
-            const result = await postToServer({ action: 'approveLeave', requestId: requestId });
+        async function handleLeaveRequest(requestId, actionType) {
+            const action = actionType === 'approve' ? 'approveLeave' : 'rejectLeave';
+            const message = actionType === 'approve' ? 'Menyetujui permintaan...' : 'Menolak permintaan...';
+            
+            showNotification(message, 'info');
+            const result = await postToServer({ action: action, requestId: requestId });
+            
             if (result.status === 'success') {
-                showSuccessModal('Permintaan Disetujui!', `Permintaan telah disetujui.`);
-                loadDashboardData(); // Muat ulang data
-            } else {
-                showNotification(`Error: ${result.message}`, 'error');
-            }
-        }
-
-        // Reject early leave
-        async function rejectEarlyLeave(requestId) {
-            showNotification('Memproses penolakan...', 'info');
-            const result = await postToServer({ action: 'rejectLeave', requestId: requestId });
-            if (result.status === 'success') {
-                showSuccessModal('Permintaan Ditolak!', `Permintaan telah ditolak.`);
+                const successTitle = actionType === 'approve' ? 'Permintaan Disetujui!' : 'Permintaan Ditolak!';
+                const successMsg = `Aksi telah berhasil dicatat.`;
+                showSuccessModal(successTitle, successMsg);
                 loadDashboardData(); // Muat ulang data
             } else {
                 showNotification(`Error: ${result.message}`, 'error');
             }
         }
         
-        // Send announcement
         async function sendAnnouncement(event) {
             event.preventDefault();
             const title = document.getElementById('announcementTitle').value;
@@ -395,12 +384,7 @@
             }
         }
 
-        // --- Fungsi Modal (tidak berubah) ---
-        function viewDetails(employeeId) {
-            // Logika modal detail bisa mengambil data karyawan spesifik jika diperlukan
-            showNotification(`Menampilkan detail untuk ${employeeId} (belum diimplementasi penuh).`, 'info');
-        }
-
+        // --- Fungsi Modal & Notifikasi ---
         function showAnnouncementModal() {
             document.getElementById('announcementModal').classList.remove('hidden');
         }
@@ -437,6 +421,4 @@
         });
     </script>
 </body>
-
 </html>
-
