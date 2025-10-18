@@ -215,8 +215,8 @@
         async function loadDashboardData() {
             showNotification('Memuat data terbaru...', 'info');
             try {
-                const response = await fetch(`${GAS_URL}?action=getManagerDashboard`);
-                const result = await response.json();
+                let response = await fetch(`${GAS_URL}?action=getManagerDashboard`);
+                let result = await response.json();
 
                 if (result.status === 'success') {
                     populateDashboard(result.data);
@@ -329,7 +329,7 @@
         
         async function postToServer(payload) {
              try {
-                const response = await fetch(GAS_URL, {
+                let response = await fetch(GAS_URL, {
                     method: 'POST',
                     mode: 'no-cors', // Diperlukan untuk Apps Script V8
                     headers: { 'Content-Type': 'application/json' },
@@ -343,15 +343,15 @@
         }
 
         async function handleLeaveRequest(requestId, actionType) {
-            const action = actionType === 'approve' ? 'approveLeave' : 'rejectLeave';
-            const message = actionType === 'approve' ? 'Menyetujui permintaan...' : 'Menolak permintaan...';
+            let action = actionType === 'approve' ? 'approveLeave' : 'rejectLeave';
+            let message = actionType === 'approve' ? 'Menyetujui permintaan...' : 'Menolak permintaan...';
             
             showNotification(message, 'info');
-            const result = await postToServer({ action: action, requestId: requestId });
+            let result = await postToServer({ action: action, requestId: requestId });
             
             if (result.status === 'success') {
-                const successTitle = actionType === 'approve' ? 'Permintaan Disetujui!' : 'Permintaan Ditolak!';
-                const successMsg = `Aksi telah berhasil dicatat.`;
+                let successTitle = actionType === 'approve' ? 'Permintaan Disetujui!' : 'Permintaan Ditolak!';
+                let successMsg = `Aksi telah berhasil dicatat.`;
                 showSuccessModal(successTitle, successMsg);
                 loadDashboardData(); // Muat ulang data
             } else {
@@ -361,15 +361,15 @@
         
         async function sendAnnouncement(event) {
             event.preventDefault();
-            const title = document.getElementById('announcementTitle').value;
-            const message = document.getElementById('announcementMessage').value;
-            const target = document.getElementById('announcementTarget').value;
+            let title = document.getElementById('announcementTitle').value;
+            let message = document.getElementById('announcementMessage').value;
+            let target = document.getElementById('announcementTarget').value;
 
             if (title && message) {
                 closeAnnouncementModal();
                 showNotification('Mengirim pengumuman...', 'info');
                 
-                const result = await postToServer({ 
+                let result = await postToServer({ 
                     action: 'sendAnnouncement', 
                     title: title, 
                     message: message, 
@@ -422,3 +422,4 @@
     </script>
 </body>
 </html>
+
