@@ -34,7 +34,7 @@
                 </div>
                 <div class="text-right">
                     <p class="text-sm opacity-90">Manager,</p>
-                    <p class="font-semibold">Pak Erik</p>
+                    <p class="font-semibold">Budi Santoso</p>
                     <p class="text-xs opacity-75" id="currentDateTime">Memuat...</p>
                 </div>
             </div>
@@ -268,9 +268,15 @@
                         jamMasukDisplay = `<span class="text-red-600 font-semibold">${emp.jamMasuk} (Terlambat)</span>`;
                     }
                     
+                    // PERUBAHAN: Tampilkan foto profil permanen atau inisial
+                    let fotoDisplay = `<div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">${emp.foto}</div>`;
+                    if (emp.fotoProfil) {
+                        fotoDisplay = `<img src="${emp.fotoProfil}" alt="${emp.nama}" class="w-10 h-10 rounded-full object-cover border-2 border-gray-200">`;
+                    }
+
                     const row = `
                         <tr class="border-b hover:bg-gray-50">
-                            <td class="p-3"><div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold text-sm">${emp.foto}</div></td>
+                            <td class="p-3">${fotoDisplay}</td>
                             <td class="p-3 font-medium">${emp.nama}</td>
                             <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${emp.shift}</span></td>
                             <td class="p-3">${jamMasukDisplay}</td>
@@ -315,7 +321,6 @@
                 requestsContainer.innerHTML = '<p class="text-sm text-gray-500">Tidak ada permintaan izin pulang cepat.</p>';
             }
 
-            // --- BARU: Mengisi Laporan Mingguan ---
             const weeklyTableBody = document.getElementById('weeklyReportTable');
             weeklyTableBody.innerHTML = '';
             if (data.weeklyReport && data.weeklyReport.length > 0) {
