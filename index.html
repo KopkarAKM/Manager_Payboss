@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PayBoss Cafe - Dashboard Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { box-sizing: border-box; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .pulse-animation { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .notification-slide { animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .status-online { background-color: #10b981; animation: pulse 2s infinite; }
+        .status-offline { background-color: #ef4444; }
+        .status-break { background-color: #f59e0b; }
+        .chart-container { position: relative; height: 200px; }
+        .progress-bar { transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-full bg-gray-50">
+    <div class="min-h-full">
+        <header class="gradient-bg text-white p-4">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white p-2 rounded-full"><span class="text-2xl">☕</span></div>
+                    <div>
+                        <h1 class="text-xl font-bold">PayBoss Cafe - Manager Dashboard</h1>
+                        <p class="text-sm opacity-90">Sistem Monitoring Kehadiran Karyawan</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm opacity-90">Manager,</p>
+                    <p class="font-semibold">Budi Santoso</p>
+                    <p class="text-xs opacity-75" id="currentDateTime">Memuat...</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 p-3 rounded-full"><span class="text-green-600 text-xl">👥</span></div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Hadir Hari Ini</p>
+                            <p class="text-2xl font-bold text-gray-800" id="presentCount">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center">
+                        <div class="bg-red-100 p-3 rounded-full"><span class="text-red-600 text-xl">❌</span></div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Tidak Hadir</p>
+                            <p class="text-2xl font-bold text-gray-800" id="absentCount">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center">
+                        <div class="bg-yellow-100 p-3 rounded-full"><span class="text-yellow-600 text-xl">⏰</span></div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Terlambat</p>
+                            <p class="text-2xl font-bold text-gray-800" id="lateCount">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-full"><span class="text-blue-600 text-xl">🕐</span></div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Sedang Kerja</p>
+                            <p class="text-2xl font-bold text-gray-800" id="workingCount">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg card-shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="mr-2">📊</span>Monitor Kehadiran Real-time
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="loadDashboardData()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            🔄 Refresh
+                        </button>
+                        <button onclick="showAnnouncementModal()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                            📢 Buat Pengumuman
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="text-left p-3 font-semibold">Foto</th>
+                                <th class="text-left p-3 font-semibold">Nama Karyawan</th>
+                                <th class="text-left p-3 font-semibold">Shift</th>
+                                <th class="text-left p-3 font-semibold">Jam Masuk</th>
+                                <th class="text-left p-3 font-semibold">Jam Keluar</th>
+                                <th class="text-left p-3 font-semibold">Durasi Kerja</th>
+                                <th class="text-left p-3 font-semibold">Status</th>
+                                <th class="text-left p-3 font-semibold">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTable">
+                           <tr><td colspan="8" class="text-center p-4 text-gray-500">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="mr-2">🕐</span> Ringkasan Shift Hari Ini
+                    </h3>
+                    <div class="space-y-4" id="shiftOverviewContainer">
+                        <p class="text-gray-500">Memuat data shift...</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg card-shadow p-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                        <span class="mr-2">⚠️</span> Permintaan Pulang Cepat
+                        <span id="pendingCountBadge" class="ml-2 bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full hidden">0 pending</span>
+                    </h3>
+                    <div class="space-y-4" id="earlyLeaveRequests">
+                        <p class="text-gray-500">Memuat permintaan...</p>
+                    </div>
+                </div>
+            </div>
+            
+             <div class="bg-white rounded-lg card-shadow p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span class="mr-2">📈</span> Laporan Kehadiran Mingguan (Contoh)
+                </h3>
+                <p class="text-sm text-gray-600">Fitur ini dapat dikembangkan lebih lanjut di Apps Script untuk menarik data historis.</p>
+            </div>
+        </main>
+
+        <div id="employeeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+             </div>
+
+        <div id="announcementModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg max-w-md w-full p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Buat Pengumuman</h3>
+                <form onsubmit="sendAnnouncement(event)">
+                    <div class="mb-4">
+                        <label for="announcementTitle" class="block text-sm font-medium text-gray-700 mb-2">Judul Pengumuman</label>
+                        <input type="text" id="announcementTitle" class="w-full border border-gray-300 rounded-lg p-3" placeholder="Contoh: Rapat Tim Besok" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="announcementMessage" class="block text-sm font-medium text-gray-700 mb-2">Pesan</label>
+                        <textarea id="announcementMessage" rows="4" class="w-full border border-gray-300 rounded-lg p-3" placeholder="Tulis pesan pengumuman..." required></textarea>
+                    </div>
+                    <div class="mb-6">
+                        <label for="announcementTarget" class="block text-sm font-medium text-gray-700 mb-2">Kirim ke:</label>
+                        <select id="announcementTarget" class="w-full border border-gray-300 rounded-lg p-3">
+                            <option value="Semua">Semua Karyawan</option>
+                            <option value="Pagi">Shift Pagi saja</option>
+                            <option value="Siang">Shift Siang saja</option>
+                            <option value="Malam">Shift Malam saja</option>
+                        </select>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeAnnouncementModal()" class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                            Kirim Pengumuman
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-lg max-w-sm w-full p-6 text-center">
+                <div class="text-green-500 text-5xl mb-4">✅</div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2" id="successTitle">Berhasil!</h3>
+                <p class="text-gray-600 mb-4" id="successMessage">Aksi berhasil dilakukan</p>
+                <button onclick="closeSuccessModal()" class="bg-green-600 text-white py-2 px-6 rounded-lg hover:bg-green-700 transition-colors">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // URL WEB APP ANDA
+        // =============================================
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzNtA8PdlbZQ_Jw_5JNLlDnhT-EYq-ylpmMrFIgedqGObtfcGVkpV50DSS4AGxrDjsE/exec";
+        // =============================================
+
+        // Update current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const dateTimeString = now.toLocaleDateString('id-ID', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            }) + ' - ' + now.toLocaleTimeString('id-ID');
+            document.getElementById('currentDateTime').textContent = dateTimeString;
+        }
+
+        // Memuat data utama dari Google Sheet
+        async function loadDashboardData() {
+            showNotification('Memuat data terbaru...', 'info');
+            try {
+                const response = await fetch(`${GAS_URL}?action=getManagerDashboard`);
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    populateDashboard(result.data);
+                    showNotification('Data berhasil dimuat', 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Mengisi data ke HTML
+        function populateDashboard(data) {
+            // 1. Quick Stats
+            document.getElementById('presentCount').textContent = data.quickStats.presentCount;
+            document.getElementById('absentCount').textContent = data.quickStats.absentCount;
+            document.getElementById('lateCount').textContent = data.quickStats.lateCount;
+            document.getElementById('workingCount').textContent = data.quickStats.workingCount;
+
+            // 2. Attendance Table
+            const tableBody = document.getElementById('attendanceTable');
+            tableBody.innerHTML = ''; // Kosongkan tabel
+            if (data.attendanceTable.length === 0) {
+                 tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-500">Tidak ada jadwal hari ini.</td></tr>';
+            } else {
+                data.attendanceTable.forEach(emp => {
+                    const statusColorClass = emp.statusColor === 'online' ? 'status-online' : 'status-offline';
+                    const statusTextColor = emp.statusColor === 'online' ? 'text-green-600' : 'text-red-600';
+                    if (emp.status === 'Terlambat') statusTextColor = 'text-red-600';
+                    if (emp.status === 'Tidak Hadir') statusColorClass = 'status-offline';
+                    
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3">
+                                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">${emp.foto}</div>
+                            </td>
+                            <td class="p-3 font-medium">${emp.nama}</td>
+                            <td class="p-3"><span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${emp.shift}</span></td>
+                            <td class="p-3 ${emp.status === 'Terlambat' ? 'text-red-600' : ''}">${emp.jamMasuk}</td>
+                            <td class="p-3 text-gray-400">${emp.jamKeluar}</td>
+                            <td class="p-3">${emp.durasi}</td>
+                            <td class="p-3">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 rounded-full ${statusColorClass} mr-2"></div>
+                                    <span class="${statusTextColor} font-medium">${emp.status}</span>
+                                </div>
+                            </td>
+                            <td class="p-3">
+                                <button onclick="viewDetails('${emp.id}')" class="text-blue-600 hover:text-blue-800 text-xs">Detail</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            // 3. Shift Overview
+            const shiftContainer = document.getElementById('shiftOverviewContainer');
+            shiftContainer.innerHTML = '';
+            data.shiftOverview.forEach(shift => {
+                const percentage = shift.total > 0 ? (shift.present / shift.total) * 100 : 0;
+                const shiftEl = `
+                    <div class="border rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">Shift ${shift.name}</span>
+                            <span class="text-sm text-gray-600">${shift.present}/${shift.total} karyawan</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full progress-bar" style="width: ${percentage}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-1">${shift.total - shift.present} tidak hadir</p>
+                    </div>
+                `;
+                shiftContainer.innerHTML += shiftEl;
+            });
+
+            // 4. Early Leave Requests
+            const requestsContainer = document.getElementById('earlyLeaveRequests');
+            requestsContainer.innerHTML = '';
+            if (data.earlyLeaveRequests.length > 0) {
+                document.getElementById('pendingCountBadge').textContent = `${data.earlyLeaveRequests.length} pending`;
+                document.getElementById('pendingCountBadge').classList.remove('hidden');
+
+                data.earlyLeaveRequests.forEach(req => {
+                    const reqEl = `
+                        <div class="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-medium text-gray-800">${req.nama}</p>
+                                    <p class="text-sm text-gray-600">Ingin pulang pukul ${req.waktu}</p>
+                                </div>
+                                <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Pending</span>
+                            </div>
+                            <p class="text-sm text-gray-700 mb-3"><strong>Alasan:</strong> ${req.alasan}</p>
+                            <div class="flex space-x-2">
+                                <button onclick="approveEarlyLeave('${req.requestId}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">✓ Setujui</button>
+                                <button onclick="rejectEarlyLeave('${req.requestId}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">✗ Tolak</button>
+                            </div>
+                        </div>
+                    `;
+                    requestsContainer.innerHTML += reqEl;
+                });
+            } else {
+                document.getElementById('pendingCountBadge').classList.add('hidden');
+                requestsContainer.innerHTML = '<p class="text-sm text-gray-500">Tidak ada permintaan izin pulang cepat.</p>';
+            }
+        }
+        
+        async function postToServer(payload) {
+             try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Diperlukan untuk Apps Script V8
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                // Karena mode 'no-cors', kita tidak bisa membaca respons.
+                // Kita anggap berhasil dan muat ulang data.
+                return { status: 'success' };
+            } catch (error) {
+                console.error('Error posting:', error);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // Approve early leave
+        async function approveEarlyLeave(requestId) {
+            showNotification('Memproses persetujuan...', 'info');
+            const result = await postToServer({ action: 'approveLeave', requestId: requestId });
+            if (result.status === 'success') {
+                showSuccessModal('Permintaan Disetujui!', `Permintaan telah disetujui.`);
+                loadDashboardData(); // Muat ulang data
+            } else {
+                showNotification(`Error: ${result.message}`, 'error');
+            }
+        }
+
+        // Reject early leave
+        async function rejectEarlyLeave(requestId) {
+            showNotification('Memproses penolakan...', 'info');
+            const result = await postToServer({ action: 'rejectLeave', requestId: requestId });
+            if (result.status === 'success') {
+                showSuccessModal('Permintaan Ditolak!', `Permintaan telah ditolak.`);
+                loadDashboardData(); // Muat ulang data
+            } else {
+                showNotification(`Error: ${result.message}`, 'error');
+            }
+        }
+        
+        // Send announcement
+        async function sendAnnouncement(event) {
+            event.preventDefault();
+            const title = document.getElementById('announcementTitle').value;
+            const message = document.getElementById('announcementMessage').value;
+            const target = document.getElementById('announcementTarget').value;
+
+            if (title && message) {
+                closeAnnouncementModal();
+                showNotification('Mengirim pengumuman...', 'info');
+                
+                const result = await postToServer({ 
+                    action: 'sendAnnouncement', 
+                    title: title, 
+                    message: message, 
+                    target: target 
+                });
+                
+                if (result.status === 'success') {
+                    showSuccessModal('Pengumuman Terkirim!', `Pengumuman "${title}" berhasil dikirim.`);
+                } else {
+                    showNotification(`Error: ${result.message}`, 'error');
+                }
+            }
+        }
+
+        // --- Fungsi Modal (tidak berubah) ---
+        function viewDetails(employeeId) {
+            // Logika modal detail bisa mengambil data karyawan spesifik jika diperlukan
+            showNotification(`Menampilkan detail untuk ${employeeId} (belum diimplementasi penuh).`, 'info');
+        }
+
+        function showAnnouncementModal() {
+            document.getElementById('announcementModal').classList.remove('hidden');
+        }
+
+        function closeAnnouncementModal() {
+            document.getElementById('announcementModal').classList.add('hidden');
+            document.getElementById('announcementTitle').value = '';
+            document.getElementById('announcementMessage').value = '';
+        }
+
+        function showSuccessModal(title, message) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 notification-slide ${type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-blue-500'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => { notification.remove(); }, 3000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            loadDashboardData(); // Muat data saat halaman dibuka
+        });
+    </script>
+</body>
+</html>
